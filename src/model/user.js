@@ -25,8 +25,14 @@ const userSchema = new Schema({
         required: true,
         minLength: [6, "Password must be at least 6 characters long"]
     },
-    verificationToken: { type: String },
-    isVerified: { type: Boolean, default: false }
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
+    refreshToken: {
+        type: String,
+        default: null
+    }
 })
 
 const User = mongoose.model("User", userSchema)

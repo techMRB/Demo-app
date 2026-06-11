@@ -1,7 +1,9 @@
 import express from "express"
 import cors from "cors"
 import bodyParser from "body-parser"
+import cookieParser from "cookie-parser";
 import userRoutes from "./routes/userRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 
 const corsOptions = {
@@ -13,10 +15,12 @@ const corsOptions = {
 const app = express();
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
 app.use("/api/users", userRoutes);
+app.use("/auth/api/", authRoutes);
 // to test the application or API
 app.get("/", (req, res) => {
     res.json({ message: "Welcome to the application." });
