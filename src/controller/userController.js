@@ -2,7 +2,10 @@ import User from '../model/user.js';
 import axios from 'axios';
 import { sendEmail } from '../utils/email.js';
 import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 
+dotenv.config();
 // Create a new user
 export const createUser = async (req, res) => {
     try {
@@ -10,6 +13,11 @@ export const createUser = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(user_password, salt);
         req.body.user_password = hashedPassword;
+        const token = jwt.sign(
+            { email: req.body.user_email },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
         const user = await User.create(req.body);
         if (user) {
             const subject = "Welcome to Demo App - Please Verify Your Email";
@@ -17,7 +25,7 @@ export const createUser = async (req, res) => {
                 <p>Hello ${user.user_name},</p>
                 <p>Welcome to the Demo App.<p/> 
                 <p>Please verify your email by clicking the button below:</p>
-                <a href="http://localhost:5000/api/users/register" style="display: inline-block; padding: 10px 20px; font-size: 16px; color: #fff; background-color: #007bff; text-decoration: none; border-radius: 5px;">Verify Email</a>
+                <a href="http://localhost:3000/verify-email/${token}" style="display: inline-block; padding: 10px 20px; font-size: 16px; color: #fff; background-color: #007bff; text-decoration: none; border-radius: 5px;">Verify Email</a>
                 <p>This token will expire in 24 hours.</p>
                 <p>Thank you for joining us!</p>
                 <p>Best regards,<br>Demo App Team</p>
@@ -28,6 +36,24 @@ export const createUser = async (req, res) => {
     } catch (error) {
         console.log("Error creating user", error);
         res.status(500).json({ message: "Error creating user" });
+    }
+}
+
+//verify user email
+export const verifyEmail = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findOne({ user_email: decoded.email });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        user.isVerified = true;
+        await user.save();
+        res.status(200).json({ message: "Email verified successfully!" });
+    } catch (error) {
+        console.log("Error verifying email", error);
+        res.status(500).json({ message: "Error verifying email" });
     }
 }
 
