@@ -23,7 +23,7 @@ app.use("/api/users", userRoutes);
 app.use("/auth/api/", authRoutes);
 // to test the application or API
 app.get("/", (req, res) => {
-    res.json({ message: "Welcome to the application." });
+    res.json({ message: "HEllo from CI/CD pipeline" });
 });
 
 export default app;
