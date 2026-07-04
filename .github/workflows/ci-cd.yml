@@ -24,7 +24,7 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm tests
+        run: npm test
 
   deploy:
     needs: build-and-test
