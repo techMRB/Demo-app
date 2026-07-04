@@ -32,6 +32,11 @@ const userSchema = new Schema({
     refreshToken: {
         type: String,
         default: null
+    },
+    lastActivity: {
+        type: Date,
+        default: null,
+        select: false
     }
 })
 
