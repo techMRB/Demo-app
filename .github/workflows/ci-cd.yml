@@ -1,0 +1,35 @@
+name: CI/CD Local Deploy
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+jobs:
+  build-and-test:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm tests
+
+deploy:
+  needs: build-and-test
+  runs-on: self-hosted
+
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Restart app with PM2
+      run: pm2 restart backendapi || pm2 start app.js
