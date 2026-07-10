@@ -47,7 +47,7 @@ export const refreshToken = async (incomingRefreshToken) => {
             user.lastActivity = null;
             await user.save();
         }
-        throw { status: 403, message: "Refresh token reuse detected. Please login again" };
+        throw { status: 403, message: "Refresh token reuse detected. Please login again", errorCode: "REFRESH_TOKEN_REUSE_DETECTED" };
     }
     const newlastActivity = new Date();
     const { accessToken, refreshToken } = generateTokens(user, newlastActivity);
@@ -57,6 +57,8 @@ export const refreshToken = async (incomingRefreshToken) => {
     return { accessToken, refreshToken };
 }
 
-
+export const logoutUser = async (userId) => {
+    await User.findByIdAndUpdate(userId, { refreshToken: null, lastActivity: null });
+}
 
 

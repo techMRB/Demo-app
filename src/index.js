@@ -20,7 +20,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 
 app.use("/api/users", userRoutes);
-app.use("/auth/api/", authRoutes);
+app.use("/api/auth/", authRoutes);
 // to test the application or API
 app.get("/", (req, res) => {
     res.json({ message: "Welcome to the application." });

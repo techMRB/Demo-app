@@ -1,4 +1,4 @@
-import { generateTokens, refreshToken } from "../services/authService.js";
+import { generateTokens, refreshToken, logoutUser } from "../services/authService.js";
 import User from "../model/user.js";
 import bcrypt from "bcrypt";
 import { successResponse, errorResponse } from "../utils/apiRespnse.js";
@@ -94,3 +94,20 @@ export const refresh = async (req, res) => {
     }
 }
 
+export const logout = async (req, res) => {
+    try {
+        await logoutUser(req.user.id);
+        res.clearCookie("refreshToken");
+        return successResponse(res, 200, "Logged out successfully", {
+            success: true
+        });
+    } catch (error) {
+        console.error("Error during logout:", error);
+        return errorResponse(
+            res,
+            error.status || 500,
+            error.message || "Internal server error",
+            error.errorCode
+        );
+    }
+}
