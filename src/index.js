@@ -9,7 +9,8 @@ import authRoutes from "./routes/authRoutes.js";
 const corsOptions = {
     origin: 'http://localhost:3000',
     optionsSuccessStatus: 200,
-    credentials: true
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }
 
 const app = express();

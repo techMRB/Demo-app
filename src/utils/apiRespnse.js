@@ -10,7 +10,7 @@ export const arrayResponse = (res, status, message, data = []) => {
     return res.status(status).json({
         success: true,
         message,
-        data
+        ...data
     });
 };
 
@@ -28,7 +28,7 @@ export const objectResponse = (res, status, message, data = {}) => {
     return res.status(status).json({
         success: true,
         message,
-        data
+        ...data
     });
 };
 
@@ -36,6 +36,6 @@ export const successResponse = (res, status, message, data = null) => {
     return res.status(status).json({
         success: true,
         message,
-        data
+        ...data
     });
 };
