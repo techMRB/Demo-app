@@ -1,6 +1,5 @@
 import { generateTokens, refreshToken, logoutUser } from "../services/authService.js";
 import User from "../model/user.js";
-import bcrypt from "bcrypt";
 import { successResponse, errorResponse } from "../utils/apiRespnse.js";
 
 const COOKIE_OPTIONS = {
@@ -13,7 +12,7 @@ const COOKIE_OPTIONS = {
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await User.findOne({ user_email: email });
+        const user = await User.findOne({ userEmail: email }).select("+userPassword");
         if (!user) {
             return errorResponse(
                 res,
@@ -22,8 +21,7 @@ export const login = async (req, res) => {
                 "USER_NOT_FOUND"
             );
         }
-        const isPasswordValid = await bcrypt.compare(password, user.user_password);
-        if (!isPasswordValid) {
+        if (!user || !(await user.comparePassword(password))) {
             return errorResponse(
                 res,
                 401,
@@ -54,11 +52,7 @@ export const login = async (req, res) => {
             token_type: "Bearer",
             expired_in: 15 * 60, // 15 minutes in seconds
             accessToken: accessToken,
-            user: {
-                id: user._id,
-                name: user.user_name,
-                email: user.user_email
-            }
+            user: user.toSafeJSON()
         });
     } catch (error) {
         console.error("Error during login:", error);
