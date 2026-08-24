@@ -5,7 +5,7 @@ const ONE_HOUR_MS = 30 * 1000; // 1 hour in milliseconds
 
 export const generateTokens = (user, lastActivity) => {
     const accessToken = jwt.sign(
-        { email: user.user_email, id: user._id },
+        { email: user.userEmail, id: user._id },
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: "15m" }
     );

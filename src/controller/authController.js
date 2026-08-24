@@ -13,7 +13,7 @@ const COOKIE_OPTIONS = {
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await User.findOne({ user_email: email });
+        const user = await User.findOne({ userEmail: email });
         if (!user) {
             return errorResponse(
                 res,
@@ -22,7 +22,7 @@ export const login = async (req, res) => {
                 "USER_NOT_FOUND"
             );
         }
-        const isPasswordValid = await bcrypt.compare(password, user.user_password);
+        const isPasswordValid = await bcrypt.compare(password, user.userPassword);
         if (!isPasswordValid) {
             return errorResponse(
                 res,
@@ -56,8 +56,8 @@ export const login = async (req, res) => {
             accessToken: accessToken,
             user: {
                 id: user._id,
-                name: user.user_name,
-                email: user.user_email
+                name: user.userName,
+                email: user.userEmail
             }
         });
     } catch (error) {
