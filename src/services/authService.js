@@ -57,6 +57,10 @@ export const refreshToken = async (incomingRefreshToken) => {
     return { accessToken, refreshToken };
 }
 
+export const logoutUser = async (userId) => {
+    await User.findByIdAndUpdate(userId, { refreshToken: null, lastActivity: null });
+}
+
 
 
 
