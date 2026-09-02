@@ -5,7 +5,7 @@ const ONE_HOUR_MS = 30 * 1000; // 1 hour in milliseconds
 
 export const generateTokens = (user, lastActivity) => {
     const accessToken = jwt.sign(
-        { email: user.userEmail, id: user._id },
+        { email: user.userEmail, role: user.userRole, tokenVersion: user.tokenVersion, id: user._id },
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: "15m" }
     );
@@ -49,6 +49,12 @@ export const refreshToken = async (incomingRefreshToken) => {
         }
         throw { status: 403, message: "Refresh token reuse detected. Please login again" };
     }
+
+    // if(user.tokenVersion !== decode.tokenVersion) {
+    //     res.clearCookie("refreshToken");
+    //     throw { status: 403, message: "Token version mismatch. Please log in again." };
+    // }
+
     const newlastActivity = new Date();
     const { accessToken, refreshToken } = generateTokens(user, newlastActivity);
     user.refreshToken = refreshToken;

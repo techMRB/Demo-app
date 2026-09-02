@@ -1,4 +1,4 @@
-import { generateTokens, refreshToken } from "../services/authService.js";
+import { generateTokens, refreshToken, logoutUser} from "../services/authService.js";
 import User from "../model/user.js";
 import bcrypt from "bcrypt";
 import { successResponse, errorResponse } from "../utils/apiRespnse.js";
@@ -13,7 +13,7 @@ const COOKIE_OPTIONS = {
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await User.findOne({ userEmail: email });
+        const user = await User.findOne({ userEmail: email }).select("+userPassword");
         if (!user) {
             return errorResponse(
                 res,
@@ -22,8 +22,7 @@ export const login = async (req, res) => {
                 "USER_NOT_FOUND"
             );
         }
-        const isPasswordValid = await bcrypt.compare(password, user.userPassword);
-        if (!isPasswordValid) {
+        if (!user || !(await user.comparePassword(password))) {
             return errorResponse(
                 res,
                 401,
@@ -50,15 +49,10 @@ export const login = async (req, res) => {
         // set refresh token in httpOnly cookie
         res.cookie("refreshToken", refreshToken, COOKIE_OPTIONS);
         return successResponse(res, 200, "Signed in successfully", {
-            success: true,
             token_type: "Bearer",
             expired_in: 15 * 60, // 15 minutes in seconds
             accessToken: accessToken,
-            user: {
-                id: user._id,
-                name: user.userName,
-                email: user.userEmail
-            }
+            user: user.toSafeJSON()
         });
     } catch (error) {
         console.error("Error during login:", error);
@@ -77,10 +71,10 @@ export const refresh = async (req, res) => {
         const result = await refreshToken(incomingRefreshToken);
         res.cookie("refreshToken", result.refreshToken, COOKIE_OPTIONS);
         return successResponse(res, 200, "Token refreshed successfully", {
-            success: true,
             token_type: "Bearer",
             expired_in: 15 * 60, // 15 minutes in seconds
-            accessToken: result.accessToken
+            accessToken: result.accessToken,
+            user: req.user.toSafeJSON()
         });
     } catch (error) {
         console.log(error)
@@ -99,7 +93,6 @@ export const logout = async (req, res) => {
         await logoutUser(req.user.id);
         res.clearCookie("refreshToken");
         return successResponse(res, 200, "Logged out successfully", {
-            success: true
         });
     } catch (error) {
         console.error("Error during logout:", error);
@@ -111,4 +104,3 @@ export const logout = async (req, res) => {
         );
     }
 }
-
