@@ -1,7 +1,7 @@
 import User from "../model/user.js";
 import jwt from "jsonwebtoken";
 
-const ONE_HOUR_MS = 30 * 1000; // 1 hour in milliseconds
+const ONE_HOUR_MS = 60 * 60 * 1000; // 1 hour in milliseconds
 
 export const generateTokens = (user, lastActivity) => {
     const accessToken = jwt.sign(
