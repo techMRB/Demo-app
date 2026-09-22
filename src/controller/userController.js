@@ -1,4 +1,4 @@
-import User from '../model/user.js';
+import User from '../models/user.js';
 import axios from 'axios';
 import { sendEmail } from '../utils/email.js';
 import bcrypt from "bcrypt"
