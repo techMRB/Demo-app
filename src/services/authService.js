@@ -1,10 +1,12 @@
-import User from "../model/user.js";
+import User from "../models/user.js";
 import jwt from "jsonwebtoken";
+import { POPULATE_ROLE } from "../utils/constants.js";
 
 const ONE_HOUR_MS = 60 * 60 * 1000; // 1 hour in milliseconds
 
 export const generateTokens = (user, lastActivity) => {
-  const permissionKeys = user.role.permission.map((p) =>
+  console.log(typeof user);
+  const permissionKeys = user.userRole.permissions.map((p) =>
     typeof p === "object" ? p.key : p,
   );
   const accessToken = jwt.sign(
@@ -56,7 +58,7 @@ export const refreshToken = async (incomingRefreshToken) => {
       errorCode: "SESSION_EXPIRED",
     };
   }
-  const user = await User.findById(decode.id);
+  const user = await User.findById(decode.id).populate(POPULATE_ROLE);
   if (!user || user.refreshToken !== incomingRefreshToken) {
     if (user) {
       user.refreshToken = null;
@@ -69,10 +71,13 @@ export const refreshToken = async (incomingRefreshToken) => {
     };
   }
 
-  // if(user.tokenVersion !== decode.tokenVersion) {
-  //     res.clearCookie("refreshToken");
-  //     throw { status: 403, message: "Token version mismatch. Please log in again." };
-  // }
+  if (user.tokenVersion !== decode.tokenVersion) {
+    res.clearCookie("refreshToken");
+    throw {
+      status: 403,
+      message: "Token version mismatch. Please log in again.",
+    };
+  }
 
   const newlastActivity = new Date();
   const { accessToken, refreshToken } = generateTokens(user, newlastActivity);

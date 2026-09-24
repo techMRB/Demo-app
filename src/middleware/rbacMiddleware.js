@@ -67,7 +67,6 @@ export const requireFreshSession = async (req, res, next) => {
     await user.save();
     next();
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       errorCode: "INTERNAL_SERVER_ERROR",
       message: "Internal server error",
