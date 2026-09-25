@@ -11,10 +11,6 @@ dotenv.config();
 // Create a new user
 export const createUser = async (req, res) => {
   try {
-    const { userPassword } = req.body;
-    // const salt = await bcrypt.genSalt(10);
-    // const hashedPassword = await bcrypt.hash(userPassword, salt);
-    // req.body.userPassword = hashedPassword;
     const defaultRole = await Role.findOne({ name: "user" });
     if (!defaultRole) {
       return errorResponse(

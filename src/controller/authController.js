@@ -17,7 +17,6 @@ const COOKIE_OPTIONS = {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log(email, password);
     const user = await User.findOne({ userEmail: email })
       .select("+userPassword")
       .populate(POPULATE_ROLE);
@@ -29,7 +28,6 @@ export const login = async (req, res) => {
         "USER_NOT_FOUND",
       );
     }
-    console.log(await user.comparePassword(password));
     if (!user || !(await user.comparePassword(password))) {
       return errorResponse(
         res,
