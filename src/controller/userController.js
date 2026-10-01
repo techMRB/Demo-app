@@ -48,7 +48,25 @@ export const createUser = async (req, res) => {
       user: safeUser,
     });
   } catch (error) {
-    console.log("Error creating user", error);
+    if (error.code === 11000) {
+      const duplicateField = Object.keys(error.keyPattern)[0];
+      if (duplicateField === "userEmail") {
+        return errorResponse(
+          res,
+          409,
+          "Email already exists",
+          "DUPLICATE_EMAIL",
+        );
+      }
+      if (duplicateField === "userContact") {
+        return errorResponse(
+          res,
+          409,
+          "Contact number already exists",
+          "DUPLICATE_CONTACT",
+        );
+      }
+    }
     return errorResponse(
       res,
       error.status || 500,

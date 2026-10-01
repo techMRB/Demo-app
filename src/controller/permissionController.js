@@ -51,7 +51,7 @@ export const getGroupedPermissions = async (req, res) => {
 // @route POST /api/permissions body: {key, label, description?, module}
 export const createPermission = async (req, res) => {
   try {
-    const { key, label, description, module } = req.body;
+    const { key, label, description, module, isSystem } = req.body;
 
     // Validation
     if (!key?.trim() || !label?.trim() || !module?.trim()) {
@@ -81,6 +81,7 @@ export const createPermission = async (req, res) => {
       label: label.trim(),
       description,
       module: module.trim().toLowerCase(),
+      isSystem,
     };
     const permission = await Permission.create(permissionData);
     if (!permission)
@@ -124,7 +125,7 @@ export const updatePermission = async (req, res) => {
         "SYSTEM_PERMISSION_LOCKED",
       );
     }
-    const { key, label, description, module } = req.body;
+    const { key, label, description, module, isSystem } = req.body;
 
     // Update permission
 
@@ -132,6 +133,7 @@ export const updatePermission = async (req, res) => {
     if (label !== undefined) permission.label = label.trim();
     if (description !== undefined) permission.description = description;
     if (module !== undefined) permission.module = module.trim().toLowerCase();
+    if (isSystem) permission.isSystem = isSystem;
     await permission.save();
 
     return successResponse(res, 200, "Permission updated successfully", {
