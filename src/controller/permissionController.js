@@ -76,12 +76,15 @@ export const createPermission = async (req, res) => {
     }
 
     // Create new permission
-    const permission = new Permission.create({
+    const permissionData = {
       key: normalizedKey,
       label: label.trim(),
       description,
       module: module.trim().toLowerCase(),
-    });
+    };
+    const permission = await Permission.create(permissionData);
+    if (!permission)
+      return errorResponse(res, 400, "Invalid permission data", "BAD_REQUEST");
 
     return successResponse(res, 201, "Permission created successfully", {
       permission: permission,

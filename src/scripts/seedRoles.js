@@ -15,7 +15,7 @@ const DEFAULT_ROLES = [
     name: "user",
     description: "Limited access",
     isSystem: true,
-    permissionKeys: ["user:read"],
+    permissionKeys: ["user:read", "role:read", "permission:read"],
   },
 ];
 
@@ -42,7 +42,7 @@ const run = async () => {
         isSystem: roleData.isSystem,
         permissions: permissionIds,
       },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: "after" },
     );
   }
 

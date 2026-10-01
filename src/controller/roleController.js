@@ -65,7 +65,7 @@ export const createRole = async (req, res) => {
       );
     }
 
-    const validPermissionIds = validatePermissionIds(permissionIds);
+    const validPermissionIds = await validatePermissionIds(permissionIds);
     if (validPermissionIds === null) {
       return errorResponse(
         res,
@@ -74,13 +74,15 @@ export const createRole = async (req, res) => {
         "INVALID_PERMISSIONS",
       );
     }
-
-    const role = new Role.create({
+    const roleData = {
       name: normalizedRoleName,
-      permissions: permissionIds,
       description,
-    });
-
+      permissions: validPermissionIds,
+    };
+    const role = await Role.create(roleData);
+    if (!role) {
+      return errorResponse(res, 400, "Invalid role data", "BAD_REQUEST");
+    }
     const populated = await role.populate("permissions");
     return successResponse(res, 201, "Role created successfully", {
       role: populated,

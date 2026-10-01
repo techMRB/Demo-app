@@ -61,7 +61,6 @@ export const login = async (req, res) => {
       user: user.toSafeJSON(),
     });
   } catch (error) {
-    console.error("Error during login:", error);
     return errorResponse(
       res,
       error.status || 500,

@@ -46,7 +46,7 @@ const run = async () => {
     await Permission.findOneAndUpdate(
       { key: p.key },
       { $set: p },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: "after" },
     );
   }
 
