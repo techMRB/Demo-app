@@ -17,7 +17,8 @@ const COOKIE_OPTIONS = {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ userEmail: email })
+    const enteredEmail = email.toLowerCase();
+    const user = await User.findOne({ userEmail: enteredEmail })
       .select("+userPassword")
       .populate(POPULATE_ROLE);
     if (!user) {
