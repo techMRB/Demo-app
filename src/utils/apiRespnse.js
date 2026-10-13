@@ -32,7 +32,7 @@ export const objectResponse = (res, status, message, data = {}) => {
     });
 };
 
-export const successResponse = (res, status, message, data = null) => {
+export const successResponse = (res, status, message, data = {}) => {
     return res.status(status).json({
         success: true,
         message,
