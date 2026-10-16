@@ -80,7 +80,7 @@ export const refresh = async (req, res) => {
       token_type: "Bearer",
       expired_in: 15 * 60, // 15 minutes in seconds
       accessToken: result.accessToken,
-      user: req.user.toSafeJSON(),
+      user: result.user,
     });
   } catch (error) {
     console.log(error);

@@ -84,7 +84,7 @@ export const refreshToken = async (incomingRefreshToken) => {
   user.refreshToken = refreshToken;
   user.lastActivity = newlastActivity;
   await user.save();
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken, user: user.toSafeJSON() };
 };
 
 export const logoutUser = async (userId) => {
