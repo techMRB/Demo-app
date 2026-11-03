@@ -72,7 +72,10 @@ export const refreshToken = async (incomingRefreshToken) => {
   }
 
   if (user.tokenVersion !== decode.tokenVersion) {
-    res.clearCookie("refreshToken");
+    await User.findByIdAndUpdate(decode.id, {
+      refreshToken: null,
+      lastActivity: null,
+    });
     throw {
       status: 403,
       message: "Token version mismatch. Please log in again.",
