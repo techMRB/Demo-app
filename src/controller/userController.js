@@ -27,6 +27,7 @@ export const createUser = async (req, res) => {
       { expiresIn: "24h" },
     );
     const user = await User.create(req.body);
+    await user.populate(POPULATE_ROLE);
     if (user) {
       const subject = "Welcome to Demo App - Please Verify Your Email";
       const html = `
@@ -41,11 +42,8 @@ export const createUser = async (req, res) => {
       await sendEmail(user.userEmail, subject, html);
     }
 
-    const safeUser = user.toObject();
-    delete safeUser.userPassword;
-
     return successResponse(res, 201, "User created successfully", {
-      user: safeUser,
+      user: user.toSafeJSON(),
     });
   } catch (error) {
     if (error.code === 11000) {
@@ -102,9 +100,16 @@ export const verifyEmail = async (req, res) => {
 //get all users
 export const getAllUsers = async (req, res) => {
   try {
+    const hasUserRead = (req.user.permissions || []).includes("user:read");
+    if (!hasUserRead) {
+      const self = await User.findById(req.user.id).populate(POPULATE_ROLE);
+      return successResponse(res, 200, "Users fetched successfully", {
+        users: [self.toSafeJSON()],
+      });
+    }
     const allUsers = await User.find().populate(POPULATE_ROLE);
     return successResponse(res, 200, "Users fetched successfully", {
-      users: allUsers,
+      users: allUsers.map((u) => u.toSafeJSON()),
     });
   } catch (error) {
     console.log("Error fetching users", error);
@@ -120,7 +125,6 @@ export const getAllUsers = async (req, res) => {
 //get user by id
 export const getUserById = async (req, res) => {
   try {
-    console.log(req);
     const userdetails = await User.findById(req.params.id).populate(
       POPULATE_ROLE,
     );
@@ -128,7 +132,7 @@ export const getUserById = async (req, res) => {
       return errorResponse(res, 404, "User not found", "USER_NOT_FOUND");
     }
     return successResponse(res, 200, "User details fetched successfully", {
-      user: userdetails,
+      user: userdetails.toSafeJSON(),
     });
   } catch (error) {
     return errorResponse(
@@ -187,8 +191,9 @@ export const updateUserRole = async (req, res) => {
     }
     user.userRole = role._id;
     await user.invalidateSessions();
+    const updatedUser = await User.findById(user._id).populate(POPULATE_ROLE);
     return successResponse(res, 200, "User role updated successfully", {
-      user: user,
+      user: updatedUser.toSafeJSON(),
     });
   } catch (error) {
     return errorResponse(

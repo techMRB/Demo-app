@@ -37,6 +37,7 @@ const userSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Role",
       required: true,
+      index: true,
     },
     refreshToken: {
       type: String,
@@ -82,6 +83,7 @@ userSchema.methods.toSafeJSON = function () {
     id: this._id,
     name: this.userName,
     email: this.userEmail,
+    contact: this.userContact,
     role: roleIsPopulated ? this.userRole.name : this.userRole,
     permissions: permissionKeys,
     isVerified: this.isVerified,

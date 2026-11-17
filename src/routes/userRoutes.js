@@ -18,7 +18,7 @@ const router = express.Router();
 router.post("/register", createUser);
 router.get("/verify-email/:token", verifyEmail);
 
-router.get("/get-all-users", protect, hasPermission("user:read"), getAllUsers);
+router.get("/get-all-users", protect, getAllUsers);
 router.get(
   "/:id",
   protect,

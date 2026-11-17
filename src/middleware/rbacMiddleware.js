@@ -63,8 +63,7 @@ export const requireFreshSession = async (req, res, next) => {
 
     req.user.role = user.userRole.name;
     req.user.permissions = user.userRole.permissions.map((p) => p.key);
-    req.user.lastActivity = new Date();
-    await user.save();
+    await User.findByIdAndUpdate(user._id, { lastActivity: new Date() });
     next();
   } catch (error) {
     return res.status(500).json({
