@@ -1,13 +1,29 @@
 import User from "../models/user.js";
 import { sendEmail } from "../utils/email.js";
-import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import Role from "../models/role.js";
 import { POPULATE_ROLE } from "../utils/constants.js";
 import { successResponse, errorResponse } from "../utils/apiRespnse.js";
+import { processProfileImage, deleteProfileImages, hasImage } from "../services/imageService.js";
 
 dotenv.config();
+
+const EMPTY_PROFILE_IMAGE = {
+  original: null,
+  mobile: null,
+  tablet: null,
+  laptop: null,
+  desktop: null,
+  updatedAt: null,
+}
+
+// Fields nobody can set through req.body
+// (profileImage is changes only via file upload/ removeImage flag)
+const ALWAYS_PROTECTED = ["_id", "userRole", "profileImage", "removeImage"];
+
+// Fields only Admin can set through req.body
+const ADMIN_ONLY_FIELDS = ["userRole", "userPassword"];
 // Create a new user
 export const createUser = async (req, res) => {
   try {
@@ -146,17 +162,90 @@ export const getUserById = async (req, res) => {
 
 //updat user details
 export const updateUser = async (req, res) => {
+  let newImages = null;
+  let committed = false;
+
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    if (!user) {
-      return errorResponse(res, 404, "User not found", "USER_NOT_FOUND");
+    const userId = req.params.id;
+    const isAdmin = req.user?.role === "admin";
+
+    // Only admin or the account owner can update
+    if (!isAdmin && userId !== req.user.id) {
+      return errorResponse(res, 403, "Access denied", "ACCESS_DENIED");
     }
-    return successResponse(res, 200, "User details updated successfully", {
+
+    // Build allowed updates from body 
+    const updates = { ...req.body }
+    ALWAYS_PROTECTED.forEach((field) => delete updates[field])
+
+    if (isAdmin) {
+      ADMIN_ONLY_FIELDS.forEach((field) => delete updates[field])
+    }
+
+    const removeImage = req.body.removeImage === "true" || req.body.removeImage === true
+
+    if (req.file && removeImage) {
+      return errorResponse(res, 400, "Cannot update image and remove image at the same time", "IMAGE_UPDATE_CONFLICT")
+    }
+    // Handle profile image update/upload
+    if (req.file) {
+      const userExists = await User.findById(userId)
+      if (!userExists) {
+        return errorResponse(res, 404, "User not found", "USER_NOT_FOUND")
+      }
+
+      newImages = await processProfileImage(req.file.buffer, userId)
+      updates.profileImage = newImages
+    } else if (removeImage) {
+      updates.profileImage = EMPTY_PROFILE_IMAGE
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return errorResponse(res, 400, "No updates provided", "NO_UPDATES_PROVIDED")
+    }
+
+    // new: false -> returns the document BEFORE the update,
+    // so we kno exactly which old image files to delete
+    const previous = await User.findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      {
+        returnDocument: 'before',
+        runValidators: true,
+        projection: { profileImage: 1 },
+        lean: true
+      }
+    );
+
+    if (!previous) {
+      if (newImages) await deleteProfileImages(newImages);
+      return errorResponse(res, 404, "User not found", "USER_NOT_FOUND")
+    }
+
+    committed = true;
+
+    // Delete old image files only if the image was replaced or removed
+    const hadImage = hasImage(previous.profileImage);
+    if ((req.file || removeImage) && hadImage) {
+      try {
+        await deleteProfileImages(previous.profileImage)
+      } catch (cleanupErr) {
+        console.error("Failed to delete old profile images:", cleanupErr)
+      }
+    }
+    const user = await User.findById(userId).select("-userPassword")
+    let message = "User details updated successfully";
+    if (req.file) message = hadImage ? "Profile image updated" : "Profile image uploaded";
+    else if (removeImage) message = hadImage ? "Profile image removed" : "No profile image to remove";
+    return successResponse(res, 200, message, {
       user: user,
-    });
+    })
   } catch (error) {
+    // Remove new files only if they were never linked to the user
+    if (newImages && !committed) {
+      await deleteProfileImages(newImages).catch(() => { })
+    }
+    console.error("updateUser error:", error)
     return errorResponse(
       res,
       error.status || 500,
@@ -208,6 +297,7 @@ export const updateUserRole = async (req, res) => {
 // delete user
 export const deleteUser = async (req, res) => {
   try {
+
     if (req.params.id === req.user.id) {
       return errorResponse(
         res,
@@ -220,8 +310,17 @@ export const deleteUser = async (req, res) => {
     if (!user) {
       return errorResponse(res, 404, "User not found", "USER_NOT_FOUND");
     }
+    // Delete image files after the user is removed
+    if (hasImage(user.profileImage)) {
+      try {
+        await deleteProfileImages(user.profileImage)
+      } catch (cleanupErr) {
+        console.error("Failed to delete profile images for deleted user:", cleanupErr)
+      }
+    }
     return successResponse(res, 200, "User deleted successfully");
   } catch (error) {
+    console.error("deleteUser error:", error)
     return errorResponse(
       res,
       error.status || 500,

@@ -1,6 +1,15 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 
+const profileImageSchema = new Schema({
+  original: { type: String, default: null },
+  mobile: { type: String, default: null },
+  tablet: { type: String, default: null },
+  laptop: { type: String, default: null },
+  desktop: { type: String, default: null },
+
+}, { _id: false });
+
 const userSchema = new Schema(
   {
     userName: {
@@ -39,6 +48,10 @@ const userSchema = new Schema(
       required: true,
       index: true,
     },
+    profileImage: {
+      type: profileImageSchema,
+      default: {},
+    },
     refreshToken: {
       type: String,
       default: null,
@@ -61,6 +74,11 @@ userSchema.pre("save", async function () {
   this.userPassword = await bcrypt.hash(this.userPassword, 10);
 });
 
+// Helper: does this user already have a profile image?
+userSchema.methods.hasProfileImage = function () {
+  return Boolean(this.profileImage && this.profileImage.original);
+}
+
 userSchema.methods.comparePassword = function (entered) {
   return bcrypt.compare(entered, this.userPassword);
 };
@@ -76,8 +94,8 @@ userSchema.methods.toSafeJSON = function () {
   const permissionKeys =
     roleIsPopulated && Array.isArray(this.userRole.permissions)
       ? this.userRole.permissions.map((p) =>
-          typeof p === "object" ? p.key : p,
-        )
+        typeof p === "object" ? p.key : p,
+      )
       : [];
   return {
     id: this._id,

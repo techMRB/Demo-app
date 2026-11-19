@@ -9,6 +9,8 @@ import {
   updateUserRole,
 } from "../controller/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import { uploadProfileImage } from "../middleware/uploadProfileImageMiddleware.js";
+import { profileImageLimiter } from "../middleware/rateLimiterMiddleware.js";
 import {
   requireFreshSession,
   hasPermission,
@@ -31,6 +33,8 @@ router.put(
   protect,
   requireFreshSession,
   hasPermission("user:update"),
+  profileImageLimiter,
+  uploadProfileImage,
   updateUser,
 );
 router.delete(
